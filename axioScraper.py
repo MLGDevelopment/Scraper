@@ -411,7 +411,7 @@ class AxioScraper:
 
 
 def run(prop_ids):
-    axio = AxioScraper(headless=False)
+    axio = AxioScraper(headless=True)
     axio.mlg_axio_login()
     while 1:
         try:
@@ -433,22 +433,25 @@ def run(prop_ids):
             return 0
 
 
-def discover_properties():
+def set_diff_discovery(floor=0):
     """
 
     """
     ids_found = AxioProperty.fetch_all_property_data()
-    ids_found = [int(i) for i in ids_found]
-    max_id = max(ids_found)
+    ids_found = [int(i.property_id) for i in ids_found]
     # generate key space
     k_space = list(range(1, 20000000))
-    keys_to_search = set(k_space) - set(ids_found)
+    keys_to_search = list(set(k_space) - set(ids_found))
+    keys_to_search.sort()
+    keys_to_search = [i for i in keys_to_search if i > floor]
     run(keys_to_search)
 
-def main():
+
+def ascending_discovery():
     prop_ids = [i for i in range(1, 1000000)]
     run(prop_ids)
 
 
 if __name__ == "__main__":
-    main()
+    floor = 380
+    set_diff_discovery(floor)

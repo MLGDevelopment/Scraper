@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Author: Nik Burmeister
 import time
 import bs4
@@ -222,11 +223,7 @@ class Yardi:
 
         return res
 
-    def pull_multifamily_stats(self):
-        from app.models import Property
-        properties = Property.query.filter(Property.yardi_id != 'nan')
-        start = '1/1/2019'
-        end = '8/24/2020'
+    def pull_multifamily_stats(self, properties, start, end):
         t_span = pd.date_range(start, end, freq='2W').strftime("%m/%d/%Y").tolist()
         df = pd.DataFrame()
         for y_property in properties:

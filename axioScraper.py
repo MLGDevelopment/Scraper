@@ -27,6 +27,8 @@ class AxioScraper:
         self.curr_dir = os.path.dirname(os.path.realpath(__file__))
         cd_path = os.path.join(self.curr_dir, "driver", "chromedriver.exe")
         self.chrome_options = Options()
+        self.chrome_options.add_argument("--no-sandbox");
+        self.chrome_options.add_argument("--disable-dev-shm-usage");
         if headless:
             self.chrome_options.add_argument("--headless")
 
@@ -172,12 +174,14 @@ class AxioScraper:
                 try:
                     if self.driver.find_element_by_xpath("/html/body/hgroup/h1").text == "Error.":
                         # there is no property page, return 0
+                        print("Error Page Not Found for {_id}".format(_id=_id))
                         return 0
-                    elif r_count == 4:
+                    elif r_count == 3:
                         # exhausted
+                        print("Requests Exhausted for {_id}".format(_id=_id))
                         return 0
                 except NoSuchElementException:
-                    print("Error Page Not Found!")
+                    print("Error Page Not Found for {_id}".format(_id=_id))
 
     def get_property_details(self, _id):
         """
@@ -192,7 +196,7 @@ class AxioScraper:
             res = session.query(AxioProperty).filter(AxioProperty.property_id == _id).one()
             print("Axio Property already Indexed!")
         except NoResultFound:
-            print("Axio Property not in Database - Adding!")
+            print("Axio Property {_id} not in Database - Adding!".format(_id=_id))
 
         try:
             if not res:
@@ -427,7 +431,7 @@ def run(prop_ids):
                     print("Failed on {_id}".format(_id=_id))
                     return 0
             prop_ids.pop(0)
-            time.sleep(0.25)
+            time.sleep(1)
         except:
             traceback.print_exc()
             return 0
@@ -448,10 +452,10 @@ def set_diff_discovery(floor=0):
 
 
 def ascending_discovery():
-    prop_ids = [i for i in range(1, 1000000)]
+    prop_ids = [i for i in range(1, 2000000)]
     run(prop_ids)
 
 
 if __name__ == "__main__":
-    floor = 380
+    floor = 3006
     set_diff_discovery(floor)

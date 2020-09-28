@@ -415,7 +415,7 @@ class AxioScraper:
 
 
 def run(prop_ids):
-    axio = AxioScraper(headless=True)
+    axio = AxioScraper(headless=False)
     axio.mlg_axio_login()
     while 1:
         try:
@@ -457,5 +457,5 @@ def ascending_discovery():
 
 
 if __name__ == "__main__":
-    floor = 3006
+    floor = 34013
     set_diff_discovery(floor)

@@ -3,10 +3,13 @@
 import time
 import bs4
 import pandas as pd
+import datetime
+import calendar
+import os
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import datetime
+
 
 
 def next_weekday(d, weekday):
@@ -19,60 +22,18 @@ def next_weekday(d, weekday):
 class Yardi:
 
     def __init__(self, headless=True):
+        self.curr_dir = os.path.dirname(os.path.realpath(__file__))
+        cd_path = os.path.join(self.curr_dir, "driver", "chromedriver.exe")
         self.chrome_options = Options()
         if headless:
             self.chrome_options.add_argument("--headless")
 
         try:
-            self.driver = webdriver.Chrome(executable_path="app/scripts/chromedriver.exe", chrome_options=self.chrome_options)
+            self.driver = webdriver.Chrome(executable_path=cd_path, chrome_options=self.chrome_options)
         except:
-            self.driver = webdriver.Chrome(executable_path="chromedriver.exe", chrome_options=self.chrome_options)
+            self.driver = webdriver.Chrome(executable_path=cd_path, chrome_options=self.chrome_options)
 
         self.base = ""
-        self.set_mlg_prop_list()
-        self.set_valiant_prop_list()
-
-    def set_mlg_prop_list(self):
-        # TODO: GRAB FROM DB
-        self.mlg_prop_list = ["145",
-                              "45",
-                              "acctng",
-                              "c001",
-                              "c002",
-                              "c003",
-                              "c003a",
-                              "c004",
-                              "c006",
-                              "c006a",
-                              "c006i",
-                              "c007",
-                              "c008",
-                              "c008oea",
-                              "c009",
-                              "mlg3"]
-
-    def set_valiant_prop_list(self):
-        self.valiant_prop_list = ["m001",
-                                  "m002",
-                                  "m003",
-                                  "m004",
-                                  "m005",
-                                  "m006",
-                                  "m007",
-                                  "m008",
-                                  "m009",
-                                  "m010",
-                                  "m011",
-                                  "m012",
-                                  "m013",
-                                  "m014",
-                                  "m015"
-                                  "m016",
-                                  "mlgowned",
-                                  "mr",
-                                  "pb",
-                                  "pr",
-                                  "st"]
 
     def login(self, username, password, login_link):
         """
@@ -108,8 +69,9 @@ class Yardi:
         mlg_password = "mgmt2019"
         return self.login(mlg_username, mlg_password, yardi_login_url)
 
-    def T12_Month_Statement(self, property, book, account_tree, period_start, period_end):
+    def T12_Month_Statement(self, property, book, account_tree, period_start, period_end, acct_codes):
         # TODO: CHECK IF LOGGED IN
+
         yardi_financial_analytics_url = self.base + "GlrepFinancial.aspx"
         self.driver.get(yardi_financial_analytics_url)
         self.driver.find_element_by_id("PropertyID_LookupCode").clear()
@@ -141,28 +103,29 @@ class Yardi:
                 for i in line_item:
                     if isinstance(i, bs4.element.Tag):
                         try:
-                            line_data.append(i.text.strip())
+                            val = i.text.strip()
+                            try:
+                                val = float(i.text.strip().replace(",", ""))
+                            except ValueError:
+                                pass
+                            line_data.append(val)
                         except AttributeError:
-                            print("")
+                            print("Error")
                 data.append(line_data)
 
         df = pd.DataFrame(data=data)
-        df.columns = ["Item",
-                      "Jan 2019",
-                      "Feb 2019",
-                      "Mar 2019",
-                      "Apr 2019",
-                      "May 2019",
-                      "Jun 2019",
-                      "Jul 2019",
-                      "Aug 2019",
-                      "Sep 2019",
-                      "Oct 2019",
-                      "Nov 2019",
-                      "Dec 2019",
-                      "Total"]
+        headers[0] = "Item"
+        headers = [datetime.datetime.strptime(i, "%b %Y") for i in headers[2:-1]]
+        headers = [datetime.date(d.year, d.month, calendar.monthrange(d.year, d.month)[-1]) for d in headers]
+        headers.insert(0, "")
+        headers.insert(0, "Item")
+        del df[14]
+        df.columns = headers
         df = df.set_index("Item")
-        return df
+        yardi_codes = [i.yardi_acct_code for i in acct_codes]
+        filtered_df = df.iloc[df.index.isin(yardi_codes)]
+        ret_df = filtered_df.iloc[:, 1:].T
+        return ret_df
 
     def get_multifamily_stats(self, yardi_property_id, as_of_date):
         yardi_residential_reports_url = self.base + "ResReportSummary.aspx"
@@ -190,7 +153,6 @@ class Yardi:
                     record.append(column.text.strip())
                 if len(record) == len(headers):
                     records.append(record)
-
 
         occupancy = self.driver.find_element_by_xpath("/html/body/form/div[5]/div[2]/table/tbody/tr[4]/td[3]")
         occupancy = float(occupancy.text)/100
@@ -238,7 +200,6 @@ def main():
     yardi_manager = Yardi(headless=True)
     yardi_manager.valiant_yardi_login()
     yardi_manager.pull_multifamily_stats()
-
 
 
 if __name__ == '__main__':

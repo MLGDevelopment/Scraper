@@ -15,6 +15,7 @@ import sys
 import time
 import traceback
 import usaddress
+import random
 
 packages_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..'))
 sys.path.append(os.path.join(packages_path, 'dbConn'))
@@ -24,11 +25,18 @@ from axioDB import session, RentComp, AxioProperty, AxioPropertyOccupancy
 class AxioScraper:
 
     def __init__(self, headless=True):
+        self.headless = headless
         self.curr_dir = os.path.dirname(os.path.realpath(__file__))
         cd_path = os.path.join(self.curr_dir, "driver", "chromedriver.exe")
         self.chrome_options = Options()
-        self.chrome_options.add_argument("--no-sandbox");
-        self.chrome_options.add_argument("--disable-dev-shm-usage");
+        self.chrome_options.add_argument("--no-sandbox")
+        self.chrome_options.add_argument("--disable-dev-shm-usage")
+        self.chrome_options.add_argument("start-maximized")
+        self.chrome_options.add_argument("enable-automation")
+        self.chrome_options.add_argument("--disable-infobars")
+        self.chrome_options.add_argument("--disable-browser-side-navigation")
+        self.chrome_options.add_argument("--disable-gpu")
+
         if headless:
             self.chrome_options.add_argument("--headless")
 
@@ -46,6 +54,29 @@ class AxioScraper:
         self.property_occupancy = -1
         self.property_details = - 1
         self.unit_mix = - 1
+
+    def reboot_driver(self):
+        self.driver.quit()
+        time.sleep(2)
+        cd_path = os.path.join(self.curr_dir, "driver", "chromedriver.exe")
+        self.chrome_options = Options()
+        self.chrome_options.add_argument("--no-sandbox")
+        self.chrome_options.add_argument("--disable-dev-shm-usage")
+        self.chrome_options.add_argument("start-maximized")
+        self.chrome_options.add_argument("enable-automation")
+        self.chrome_options.add_argument("--disable-infobars")
+        self.chrome_options.add_argument("--disable-browser-side-navigation")
+        self.chrome_options.add_argument("--disable-gpu")
+
+        if self.headless:
+            self.chrome_options.add_argument("--headless")
+
+        try:
+            self.driver = webdriver.Chrome(executable_path=cd_path, chrome_options=self.chrome_options)
+        except:
+            self.driver = webdriver.Chrome(executable_path=cd_path, chrome_options=self.chrome_options)
+        self.mlg_axio_login()
+        return 1
 
     def login(self, username, password, login_link):
         """
@@ -182,6 +213,13 @@ class AxioScraper:
                         return 0
                 except NoSuchElementException:
                     print("Error Page Not Found for {_id}".format(_id=_id))
+                except TimeoutException:
+                    print("rebooting driver")
+                    self.reboot_driver()
+                    
+
+                    time.sleep(1)
+
 
     def get_property_details(self, _id):
         """
@@ -415,7 +453,7 @@ class AxioScraper:
 
 
 def run(prop_ids):
-    axio = AxioScraper(headless=False)
+    axio = AxioScraper(headless=True)
     axio.mlg_axio_login()
     while 1:
         try:
@@ -431,7 +469,8 @@ def run(prop_ids):
                     print("Failed on {_id}".format(_id=_id))
                     return 0
             prop_ids.pop(0)
-            time.sleep(1)
+            r_int = random.uniform(0.01, 3)
+            time.sleep(r_int)
         except:
             traceback.print_exc()
             return 0
@@ -457,5 +496,5 @@ def ascending_discovery():
 
 
 if __name__ == "__main__":
-    floor = 34013
+    floor = 8554
     set_diff_discovery(floor)

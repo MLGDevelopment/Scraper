@@ -241,13 +241,16 @@ class AxioScraper:
                 property_details = dict()
 
                 property_details["property_id"] = _id
+
                 property_details["property_address"] = self.driver.find_element_by_css_selector(
                     "#body-container > div > div.col-md-10 > div.page-header > table > tbody > tr > td:nth-child(1) > "
                     "h2 > small").text
 
                 parsed_addr = usaddress.parse(property_details["property_address"])
+
                 property_details["property_street"] = parsed_addr[0][0] + " " + " ".join(
                     parsed_addr[i][0] for i, v in enumerate(parsed_addr) if parsed_addr[i][1] == 'StreetName')
+
                 property_details["property_city"] = [parsed_addr[i][0]
                                                      for i, v in enumerate(parsed_addr)
                                                      if parsed_addr[i][1] == 'PlaceName'][0].replace(",", "")
@@ -258,22 +261,51 @@ class AxioScraper:
                                                     for i, v in enumerate(parsed_addr)
                                                     if parsed_addr[i][1] == 'ZipCode'][0]
 
-                property_details["property_name"] = self.driver.find_element_by_css_selector("#property-name").text
-                property_details["property_owner"] = self.driver.find_element_by_css_selector(
-                    "#body-container > div > div.col-md-10 > div.page-header > table > tbody >"
-                    " tr > td:nth-child(2) > dl >dd:nth-child(4)").text
-                property_details["property_management"] = self.driver.find_element_by_css_selector(
-                    "#body-container > div > div.col-md-10 > div.page-header > table >"
-                    " tbody > tr > td:nth-child(2) > dl > "
-                    "dd:nth-child(6)").text
-                property_details["year_built"] = int(self.driver.find_element_by_css_selector(
-                    "#tab_unitmix > table:nth-child(3) > tbody > tr:nth-child(1) > td:nth-child(4)").text.split(":")[1])
-                property_details["total_units"] = int(self.driver.find_element_by_css_selector(
-                    "#tab_unitmix > table:nth-child(3) > tbody > tr:nth-child(1) > td:nth-child(1)").text.split(
-                    ":")[1].replace(",", ""))
-                area_per_unit = int(self.driver.find_element_by_css_selector(
-                    "#tab_unitmix > table:nth-child(3) > tbody > tr:nth-child(3) > td:nth-child(1)").text.split(
-                    ":")[1].replace(",", ""))
+                try:
+                    property_details["property_name"] = self.driver.find_element_by_css_selector("#property-name").text
+                except NoSuchElementException:
+                    property_details["property_name"] = None
+
+                try:
+                    property_details["property_owner"] = self.driver.find_element_by_css_selector(
+                        "#body-container > div > div.col-md-10 > div.page-header > table > tbody >"
+                        " tr > td:nth-child(2) > dl >dd:nth-child(4)").text
+                except NoSuchElementException:
+                    property_details["property_owner"] = None
+
+                try:
+                    property_details["property_management"] = self.driver.find_element_by_css_selector(
+                        "#body-container > div > div.col-md-10 > div.page-header > table >"
+                        " tbody > tr > td:nth-child(2) > dl > "
+                        "dd:nth-child(6)").text
+                except NoSuchElementException:
+                    property_details["property_management"] = None
+
+                try:
+                    property_details["year_built"] = int(self.driver.find_element_by_css_selector(
+                        "#tab_unitmix > table:nth-child(3) > tbody > tr:nth-child(1) > td:nth-child(4)").text.split(":")[1])
+                except NoSuchElementException:
+                    property_details["year_built"] = None
+                except ValueError:
+                    property_details["year_built"] = None
+
+                try:
+                    property_details["total_units"] = int(self.driver.find_element_by_css_selector(
+                        "#tab_unitmix > table:nth-child(3) > tbody > tr:nth-child(1) > td:nth-child(1)").text.split(
+                        ":")[1].replace(",", ""))
+                except NoSuchElementException:
+                    property_details["total_units"] = None
+                except ValueError:
+                    property_details["total_units"] = None
+
+                try:
+                    area_per_unit = int(self.driver.find_element_by_css_selector(
+                        "#tab_unitmix > table:nth-child(3) > tbody > tr:nth-child(3) > td:nth-child(1)").text.split(
+                        ":")[1].replace(",", ""))
+                except NoSuchElementException:
+                    area_per_unit = 0
+                except ValueError:
+                    area_per_unit = 0
 
                 try:
                     property_details["property_website"] = self.driver.find_element_by_css_selector(
@@ -320,6 +352,7 @@ class AxioScraper:
 
                 # todo: add error checking
                 self.driver.get("https://axio.realpage.com/PropertyReport/Transactions/{id}".format(id=_id))
+                
                 try:
                     property_details["status"] = self.driver.find_element_by_css_selector(
                         "body > div.container-fluid > div:nth-child(4) >"

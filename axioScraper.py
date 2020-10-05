@@ -194,31 +194,37 @@ class AxioScraper:
         delay = 2
         r_count = 0
         while 1:
-            self.driver.get(url)
-            r_count += 1
-            element_present = EC.presence_of_element_located((By.ID, 'property-name'))
             try:
-                WebDriverWait(self.driver, delay).until(element_present)
-                return 1
-            except TimeoutException:
-                # todo: check for errors
+                self.driver.get(url)
+                r_count += 1
+                element_present = EC.presence_of_element_located((By.ID, 'property-name'))
                 try:
-                    if self.driver.find_element_by_xpath("/html/body/hgroup/h1").text == "Error.":
-                        # there is no property page, return 0
-                        print("Error Page Not Found for {_id}".format(_id=_id))
-                        return 0
-                    elif r_count == 3:
-                        # exhausted
-                        print("Requests Exhausted for {_id}".format(_id=_id))
-                        return 0
-                except NoSuchElementException:
-                    print("Error Page Not Found for {_id}".format(_id=_id))
+                    WebDriverWait(self.driver, delay).until(element_present)
+                    return 1
                 except TimeoutException:
-                    print("rebooting driver")
-                    self.reboot_driver()
-                    
-
-                    time.sleep(1)
+                    # todo: check for errors
+                    try:
+                        if self.driver.find_element_by_xpath("/html/body/hgroup/h1").text == "Error.":
+                            # there is no property page, return 0
+                            print("Error Page Not Found for {_id}".format(_id=_id))
+                            return 0
+                        elif r_count == 3:
+                            # exhausted
+                            print("Requests Exhausted for {_id}".format(_id=_id))
+                            return 0
+                    except NoSuchElementException:
+                        print("Error Page Not Found for {_id}".format(_id=_id))
+                    except TimeoutException:
+                        print("rebooting driver")
+                        self.reboot_driver()
+                        time.sleep(1)
+            except TimeoutException:
+                print("rebooting driver")
+                self.reboot_driver()
+                time.sleep(1)
+            except:
+                traceback.print_exc()
+                exit(1)
 
 
     def get_property_details(self, _id):
@@ -529,5 +535,5 @@ def ascending_discovery():
 
 
 if __name__ == "__main__":
-    floor = 8554
+    floor = 44157
     set_diff_discovery(floor)

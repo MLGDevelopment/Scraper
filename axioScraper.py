@@ -257,15 +257,26 @@ class AxioScraper:
                 property_details["property_street"] = parsed_addr[0][0] + " " + " ".join(
                     parsed_addr[i][0] for i, v in enumerate(parsed_addr) if parsed_addr[i][1] == 'StreetName')
 
-                property_details["property_city"] = [parsed_addr[i][0]
-                                                     for i, v in enumerate(parsed_addr)
-                                                     if parsed_addr[i][1] == 'PlaceName'][0].replace(",", "")
-                property_details["property_state"] = [parsed_addr[i][0]
-                                                      for i, v in enumerate(parsed_addr)
-                                                      if parsed_addr[i][1] == 'StateName'][0].replace(",", "")
-                property_details["property_zip"] = [parsed_addr[i][0]
-                                                    for i, v in enumerate(parsed_addr)
-                                                    if parsed_addr[i][1] == 'ZipCode'][0]
+                try:
+                    property_details["property_city"] = [parsed_addr[i][0]
+                                                         for i, v in enumerate(parsed_addr)
+                                                         if parsed_addr[i][1] == 'PlaceName'][0].replace(",", "")
+                except IndexError:
+                    property_details["property_city"] = None
+
+                try:
+                    property_details["property_state"] = [parsed_addr[i][0]
+                                                          for i, v in enumerate(parsed_addr)
+                                                          if parsed_addr[i][1] == 'StateName'][0].replace(",", "")
+                except IndexError:
+                    property_details["property_state"] = None
+
+                try:
+                    property_details["property_zip"] = [parsed_addr[i][0]
+                                                        for i, v in enumerate(parsed_addr)
+                                                        if parsed_addr[i][1] == 'ZipCode'][0]
+                except IndexError:
+                    property_details["property_zip"] = None
 
                 try:
                     property_details["property_name"] = self.driver.find_element_by_css_selector("#property-name").text
@@ -492,7 +503,7 @@ class AxioScraper:
 
 
 def run(prop_ids):
-    axio = AxioScraper(headless=True)
+    axio = AxioScraper(headless=False)
     axio.mlg_axio_login()
     while 1:
         try:
@@ -535,5 +546,5 @@ def ascending_discovery():
 
 
 if __name__ == "__main__":
-    floor = 44157
+    floor = 69779
     set_diff_discovery(floor)

@@ -7,7 +7,7 @@ packages_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 sys.path.append(os.path.join(packages_path, 'dbConn'))
 sys.path.append(os.path.join(packages_path, 'Scraping'))
 from axioDB import session, RentComp, AxioProperty, AxioPropertyOccupancy
-from axioScraper import AxioScraper
+from axioScraper_legacy import AxioScraper
 
 
 def axio_scraper_scheduler(states=[], msas=[], asset_types=[], pause=0):

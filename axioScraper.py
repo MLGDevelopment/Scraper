@@ -1,4 +1,4 @@
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 from sqlalchemy.orm.exc import NoResultFound
@@ -189,7 +189,7 @@ class AxioScraper:
                 # done
                 try:
                     property_details["property_name"] = soup.select_one('#property-name').text.strip()
-                except NoSuchElementException:
+                except:
                     property_details["property_name"] = None
 
                 # done
@@ -297,7 +297,7 @@ class AxioScraper:
                     property_details["last_sale_date"] = lsd
                     if property_details["last_sale_date"] == "":
                         property_details["last_sale_date"] = None
-                except NoSuchElementException:
+                except:
                     property_details["last_sale_date"] = None
 
                 # done
@@ -349,7 +349,7 @@ class AxioScraper:
 
         try:
             tbl = soup.select('#tab_unitmix > table:nth-child(5) > tbody')[0].find_all('tr')[2:]
-        except NoSuchElementException:
+        except:
             tbl = []
 
         unit_report_list = []
@@ -496,5 +496,5 @@ def ascending_discovery():
 
 
 if __name__ == "__main__":
-    floor = 1
+    floor = 71
     set_diff_discovery(floor)

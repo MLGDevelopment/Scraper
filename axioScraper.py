@@ -459,7 +459,7 @@ def run(prop_ids):
         try:
             _id = prop_ids[0]
             axio.current_id = _id
-            res = axio.navigate_to_property_report(_id)
+            res = axio.get_property_report(_id)
             if res:
                 res = axio.get_property_details(_id)
                 if res:
@@ -496,5 +496,5 @@ def ascending_discovery():
 
 
 if __name__ == "__main__":
-    floor = 69779
+    floor = 1
     set_diff_discovery(floor)

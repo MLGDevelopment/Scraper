@@ -9,7 +9,10 @@ import os
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+import sys
 
+packages_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', '..', '..'))
+sys.path.append(os.path.join(packages_path, 'dbConn'))
 
 
 def next_weekday(d, weekday):
@@ -69,8 +72,7 @@ class Yardi:
         mlg_password = "mgmt2019"
         return self.login(mlg_username, mlg_password, yardi_login_url)
 
-    def T12_Month_Statement(self, property, book, account_tree, period_start, period_end, acct_codes):
-        # TODO: CHECK IF LOGGED IN
+    def T12_Month_Statement(self, property, book, account_tree, period_start, period_end, acct_codes, export=False):
 
         yardi_financial_analytics_url = self.base + "GlrepFinancial.aspx"
         self.driver.get(yardi_financial_analytics_url)
@@ -84,6 +86,11 @@ class Yardi:
         self.driver.find_element_by_id("FromMMYY_TextBox").send_keys(period_start)
         self.driver.find_element_by_id("ToMMYY_TextBox").clear()
         self.driver.find_element_by_id("ToMMYY_TextBox").send_keys(period_end)
+
+        if export:
+            self.driver.find_element_by_id("Excel_Button").click()
+            return 1
+
         self.driver.find_element_by_id("Display_Button").click()
 
         soup = BeautifulSoup(self.driver.page_source)
@@ -195,11 +202,39 @@ class Yardi:
                 res["period_ending"] = _date
                 df.append(res, ignore_index=True)
 
+    def rent_roll(self, yardi_id, as_of_date):
+        yardi_residential_reports_url = self.base + "ResReportSummary.aspx"
+        self.driver.get(yardi_residential_reports_url)
+        time.sleep(2)
+        self.driver.find_element_by_css_selector("#ReportType_DropDownList").send_keys("Rent Roll with Lease Charges \nselect")
+        self.driver.find_element_by_css_selector("#PropLookup_LookupCode").clear()
+        self.driver.find_element_by_css_selector("#PropLookup_LookupCode").send_keys(yardi_id)
+        self.driver.find_element_by_css_selector("#Date2_TextBox").clear()
+        as_of_date = "{month}/{day}/{year}".format(month=as_of_date.month, day=as_of_date.day, year=as_of_date.year)
+        self.driver.find_element_by_css_selector("#Date2_TextBox").send_keys(str(as_of_date))
+        self.driver.find_element_by_id("Excel_Button").click()
+        return 1
+
+    def download_mf_T12(self, yardi_id, start, end):
+        self.T12_Month_Statement(yardi_id, 'accrual', '', start, end, [], export=True)
+
+    def download_mf_RR(self, yardi_id, as_of_date):
+        self.rent_roll(yardi_id, as_of_date)
+
+    def yardi_excel_pull(self, properties, start, end, as_of_date):
+        for prop in properties:
+            self.download_mf_T12(prop[1], start, end)
+            time.sleep(1)
+            self.download_mf_RR(prop[1], as_of_date)
+            time.sleep(0.5)
 
 def main():
     yardi_manager = Yardi(headless=True)
     yardi_manager.valiant_yardi_login()
     yardi_manager.pull_multifamily_stats()
+
+
+
 
 
 if __name__ == '__main__':

@@ -1,4 +1,3 @@
-
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 from sqlalchemy.orm.exc import NoResultFound
@@ -14,6 +13,12 @@ import time
 import traceback
 import usaddress
 import random
+from geopy.geocoders import Nominatim
+from geopy.extra.rate_limiter import RateLimiter
+from geopy.exc import GeocoderUnavailable
+
+geolocator = Nominatim(user_agent="property-locator", timeout=10000)
+geocode = RateLimiter(geolocator.geocode, min_delay_seconds=2)
 
 packages_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(os.path.join(packages_path, 'dbConn'))
@@ -161,6 +166,8 @@ class AxioScraper:
                 property_details = dict()
                 property_details["property_id"] = _id
                 property_details["property_address"] = soup.find('h2').find('small').text
+                lat, long = get_lat_lon_from_address(property_details)
+                property_details['latitude'], property_details['longitude'] = lat, long
                 parsed_addr = usaddress.parse(property_details["property_address"])
                 property_details["property_street"] = parsed_addr[0][0] + " " + " ".join(
                     parsed_addr[i][0] for i, v in enumerate(parsed_addr) if parsed_addr[i][1] == 'StreetName')
@@ -450,6 +457,20 @@ def run(prop_ids):
         except:
             traceback.print_exc()
             return 0
+
+
+def get_lat_lon_from_address(address):
+    """
+
+    :return:
+    """
+
+    location = geolocator.geocode(address)
+    if location:
+        lat, long = location.latitude, location.longitude
+    else:
+        lat, long = None, None
+    return lat, long
 
 
 def run(prop_ids):

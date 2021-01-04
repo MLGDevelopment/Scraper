@@ -228,13 +228,11 @@ class Yardi:
             self.download_mf_RR(prop[1], as_of_date)
             time.sleep(0.5)
 
+
 def main():
     yardi_manager = Yardi(headless=True)
     yardi_manager.valiant_yardi_login()
     yardi_manager.pull_multifamily_stats()
-
-
-
 
 
 if __name__ == '__main__':

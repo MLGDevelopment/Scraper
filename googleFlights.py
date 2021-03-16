@@ -198,7 +198,7 @@ results = pd.DataFrame(
 
 requests = 0
 
-originations = ['DFW', 'MKE', 'SRQ' ]
+originations = ['DFW', 'MKE', 'SRQ']
 destinations = [i for i in airports if i not in originations]
 
 # test start dates for 1 week from today, 1 month, 3 months, 6 months, 12 months

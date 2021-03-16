@@ -516,6 +516,15 @@ def ascending_discovery():
     run(prop_ids)
 
 
+def update_all_properties():
+    ids_found = AxioProperty.fetch_all_property_data()
+    ids_found = [int(i.property_id) for i in ids_found]
+    ids_found.sort()
+    run(ids_found)
+
+
+
 if __name__ == "__main__":
     floor = 71
-    set_diff_discovery(floor)
+    # set_diff_discovery(floor)
+    update_all_properties()

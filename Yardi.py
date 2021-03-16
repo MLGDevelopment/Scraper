@@ -129,7 +129,7 @@ class Yardi:
         del df[14]
         df.columns = headers
         df = df.set_index("Item")
-        yardi_codes = [i.yardi_acct_code for i in acct_codes]
+        yardi_codes = [i for i in acct_codes]
         filtered_df = df.iloc[df.index.isin(yardi_codes)]
         ret_df = filtered_df.iloc[:, 1:].T
         return ret_df
@@ -230,9 +230,39 @@ class Yardi:
 
 
 def main():
-    yardi_manager = Yardi(headless=True)
+    yardi_manager = Yardi(headless=False)
     yardi_manager.valiant_yardi_login()
-    yardi_manager.pull_multifamily_stats()
+
+    df = pd.read_excel("mlg properties.xlsx")
+    df = df[~pd.isnull(df["yardi_id"])]
+    mlg_props = df[["yardi_id", "property_name"]].to_dict("records")
+
+    start = "01/2020"
+    end = "12/2020"
+    master = pd.DataFrame()
+    for prop in mlg_props:
+        data = yardi_manager.T12_Month_Statement(prop["yardi_id"], 'accrual', '', start, end, ['6999-9999'], export=False)
+        data.reset_index(drop=False, inplace=True)
+        data['index'] = pd.to_datetime(data['index'])
+        data = data.rename(columns={'6999-9999': "NOI"})
+        data['NOI'] = data["NOI"].astype(float)
+        gbq = data.groupby(data['index'].dt.to_period('Q'))['NOI'].agg('mean')
+        t_df = pd.DataFrame(gbq)
+        t_df["NOI Pct Change"] = t_df["NOI"].pct_change()
+        annual_change = (t_df["NOI"][-1] / t_df["NOI"][0] - 1)
+
+        t_df['NOI Pct Change'] = pd.Series(["{0:.2f}%".format(val * 100) for val in t_df['NOI Pct Change']], index=t_df.index)
+        t_df['NOI'] = pd.Series(["${0:,.2f}".format(val) for val in t_df['NOI']],
+                                           index=t_df.index)
+
+        t_df = t_df.T
+        t_df["Annual NOI Change"] = ['', annual_change]
+        t_df.reset_index(drop=True, inplace=True)
+        t_df["property"] = prop['property_name']
+        master = master.append(t_df)
+
+    master.to_excel("Q4 NOI Analysis.xlsx")
+    print
 
 
 if __name__ == '__main__':

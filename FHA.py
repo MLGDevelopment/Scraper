@@ -67,6 +67,8 @@ for state in states_list:
             if option.text == cy:
                 option.click()  # select() in earlier versions of webdriver
                 break
+
+        el = driver.find_element_by_css_selector('#l_limit_type > option:nth-child(3)').click()
         driver.find_element_by_xpath('/html/body/form/div[1]/input[1]').click()
         print
 
@@ -93,4 +95,4 @@ for state in states_list:
         print
 
 master_df = master_df.reset_index()
-master_df.to_excel("FHA Loan Potentials.xlsx")
+master_df.to_excel("Fannie-Freddie Loan Potentials.xlsx")

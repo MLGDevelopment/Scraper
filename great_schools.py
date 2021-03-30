@@ -85,8 +85,6 @@ class GreatSchools():
         split_data = data.text.split("\n")
         split_data = [i.strip() for i in split_data]
 
-
-
         schools = []
         while split_data:
             rating_offset = 0
@@ -177,17 +175,27 @@ class GreatSchools():
             driver.find_element_by_xpath('//*[@id="home-page"]/div[1]/div/section/div[1]/div[1]/div/div/div/div[1]/form/input').send_keys(school_address)
             time.sleep(0.5)
             driver.find_element_by_xpath('//*[@id="home-page"]/div[1]/div/section/div[1]/div[1]/div/div/div/div[1]/form/input').send_keys(Keys.ENTER)
-            sleep_floor = 2.75
+            sleep_floor = 4
             r_sleep = random.random() + sleep_floor
             time.sleep(r_sleep)
             # page_divs = driver.find_elements_by_css_selector("div")
 
-            try:
-                page_ols = driver.find_elements_by_css_selector("ol")[0]
-            except:
-                driver.find_element_by_xpath(
-                    '//*[@id="home-page"]/div[1]/div/section/div[1]/div[1]/div/div/div/div[1]/form/input').send_keys(
-                    Keys.ENTER)
+            attempts = 0
+            while 1:
+                try:
+                    page_ols = driver.find_elements_by_css_selector("ol")[0]
+                    break
+                except:
+                    if attempts > 3:
+                        page_ols = -1
+                        break
+                    attempts = attempts + 1
+                    driver.find_element_by_xpath(
+                        '//*[@id="home-page"]/div[1]/div/section/div[1]/div[1]/div/div/div/div[1]/form/input').send_keys(
+                        Keys.ENTER)
+
+            if page_ols == -1:
+                continue
 
             schools = self.extract_individual_ratings(page_ols)
             mapping[school[0]] = schools
